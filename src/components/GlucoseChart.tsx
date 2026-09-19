@@ -13,6 +13,7 @@ import {
   ReferenceArea,
 } from "recharts";
 import type { Measurement } from "@/types/measurement";
+import { parseDateTime } from "@/utils/calculations";
 
 function CustomTooltip({
   active,
@@ -45,8 +46,10 @@ export function GlucoseChart({
   referenceRangeMin?: number;
   referenceRangeMax?: number;
 }) {
+  // dateTime é texto "DD/MM/YYYY HH:mm"; comparar como string (localeCompare) ordena errado
+  // sempre que o dia do mês seguinte é numericamente menor (ex: "16/08" > "03/09" como texto).
   const data = [...measurements].sort(
-    (a, b) => a.dateTime.localeCompare(b.dateTime)
+    (a, b) => parseDateTime(a.dateTime) - parseDateTime(b.dateTime)
   );
   const hasReferenceRange = referenceRangeMin !== undefined && referenceRangeMax !== undefined;
 

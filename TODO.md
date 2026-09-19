@@ -1,0 +1,60 @@
+# TODO.md — GlicoPet
+
+Backlog de pendências técnicas e melhorias futuras. Não é especificação de produto (isso é `PRD.md`) nem guia de processo (isso é `CLAUDE.md`); é só a lista viva do que falta.
+
+Última atualização: 19-09-2026 (11ª rodada).
+
+---
+
+## Estado atual (o que já funciona)
+
+- Projeto Next.js 16 + TypeScript + Tailwind criado e rodando.
+- `dataService` (`src/services/dataService.ts`) conectado ao Google Sheets via service account, com `getMeasurements`, `addMeasurement`, `updateMeasurement`, `deleteMeasurement`, `getPetProfile` implementados.
+- Planilha "GlicoPet - Dados" criada no Drive, compartilhada com a service account, com aba "Medições" estruturada (PRD seção 11) e 3 registros de demonstração (PRD seção 33).
+- Dashboard (`src/app/page.tsx`): cards de média/última/menor/maior/total (PRD seção 16), resumo do período completo (amplitude, médias de insulina/alimentação, intervalo médio, tendência descritiva — PRD seções 22–23), gráfico combinado de glicemia + insulina (`GlucoseChart.tsx`, Recharts, PRD seções 17–19), timeline (`Timeline.tsx`, PRD seção 21) e tabela de histórico (PRD seção 26), lendo dados reais da planilha.
+- `.env.local` configurado e testado ponta a ponta (seed script + `next dev` autenticaram e leram/gravaram na planilha real).
+- `.bat` para subir localhost sem digitar comando (`iniciar-localhost.bat` + `scripts/start-dev.ps1`). **Bug real encontrado e corrigido**: a versão original abria o navegador antes do servidor terminar de subir (usuário via página de erro, servidor ainda não respondia na porta). Corrigido movendo a lógica para um `.ps1` separado que sobe o servidor numa janela própria e faz polling real em `http://localhost:3000` antes de abrir o navegador. No caminho, achei e evitei um segundo problema: o comando `timeout` do Windows trava quando não há console interativo de verdade por trás (ex: script lançado sem duplo clique direto) — troquei por `Start-Sleep` do PowerShell, que não tem essa limitação. Testado várias vezes do zero, incluindo simulando o duplo clique via `Start-Process`.
+- **Responsividade mobile** (PRD seção 29): cards em 2 colunas, gráfico e tabela com rolagem horizontal própria, timeline em largura total, modal de nova medição adaptado, sem overflow horizontal na página. Validado de verdade em viewport de 390×844 (tamanho de iPhone) — não pelo `resize_window` da automação (confirmadamente quebrado neste ambiente: a extensão fixa o viewport da aba independente do tamanho real da janela, testei redimensionando a janela do Chrome direto pela API do Windows e `window.innerWidth` continuou 1920) nem pelo celular real (`192.168.18.20:3000` não foi alcançável, provavelmente Firewall do Windows bloqueando conexão de entrada — ainda não investigado). Contornei carregando o dashboard dentro de um `<iframe>` de 390×844px numa aba separada: media queries CSS respondem à largura do iframe, não da janela — técnica válida, confirmada com `scrollWidth`/`clientWidth` via JS, não só inspeção visual.
+- **Formulário de nova medição, edição e exclusão** (`MeasurementFormModal.tsx`, modo `create`/`edit`; `DeleteMeasurementButton.tsx`): campos Pet/Data/Hora/Glicemia/Insulina/Alimentação/Contexto/Observação (PRD seção 14), com confirmação em duas etapas antes de excluir (PRD seção 26). Server Actions em `src/app/actions.ts` (`createMeasurement`, `updateMeasurementAction`, `deleteMeasurementAction`) gravam via `dataService` e revalidam o dashboard automaticamente (`revalidatePath`). Testado ponta a ponta via browser automation: criar, editar (glicemia 142→150) e excluir um registro real, confirmando em cada etapa que a planilha e o dashboard refletiam a mudança. CA-08 e CA-09 atendidos.
+
+- **Filtros de período e contexto** (`DateFilter.tsx`, `src/utils/filters.ts`): 7/30/90 dias, 6 meses, tudo, personalizado (data inicial/final) + contexto, refletidos na URL (`?period=&from=&to=&context=`), com botão "Limpar filtros" (PRD seção 27). Todas as seções da página (cards, gráfico, resumo, timeline, tabela) operam sobre o conjunto já filtrado. Distingue "sem medições cadastradas" de "nenhuma medição bate com o filtro". Testado no navegador: 7 dias zera (dados demo são de julho/2026), 90 dias traz os 3 de volta, contexto filtra corretamente, limpar filtros restaura a URL.
+
+- **Faixa de referência + alertas** (`ReferenceRangeSettings.tsx`, `src/utils/glucoseRange.ts`): limite inferior/superior configurável, persistido na aba "Perfil" (colunas `Faixa Mínima (mg/dL)`/`Faixa Máxima (mg/dL)`, Server Action `updateReferenceRangeAction`), aviso obrigatório da seção 24 sempre visível quando configurada. Indicação visual abaixo/dentro/acima: área sombreada no gráfico (`ReferenceArea` do Recharts), indicador por linha na tabela de histórico, alerta informativo contando medições fora da faixa no período filtrado (PRD seção 25, texto fixo, nunca recomendação). Testado no navegador ponta a ponta.
+  - **Bug real encontrado e corrigido durante o teste**: a aba "Perfil" já existia na planilha (criada em sessão anterior, antes das colunas de faixa existirem), então a gravação das duas colunas novas era descartada silenciosamente — `getProfileSheet()` só criava cabeçalho na criação da aba, nunca migrava um cabeçalho já existente. Corrigido com migração defensiva em `dataService.ts`: ao abrir uma aba "Perfil" já existente, completa colunas faltantes sem apagar dados. Vale lembrar disso se um bug parecido aparecer ao evoluir o schema de qualquer outra aba no futuro.
+
+- **Estados de loading e error** (`src/app/loading.tsx`, `src/app/error.tsx`, PRD seção 30): spinner via Suspense automático do Next.js durante a busca no Sheets; `error.tsx` captura qualquer falha (Sheets fora do ar, credencial inválida) e mostra o texto exato do PRD com botão "Tentar novamente". Testado forçando uma falha real (`GOOGLE_SHEET_ID` inválido via variável de ambiente, sem tocar no `.env.local`) e confirmando a recuperação depois com o ambiente normal.
+
+- **Cadastro/edição de perfil do pet** (`PetProfileSettings.tsx`, PRD seção 10): Nome, Foto (URL, sem upload de arquivo para não depender de lib nova), Peso, Nascimento/Idade, Sexo, Observações. Server Action `updatePetProfileAction`. Testado no navegador: preenchi e salvei um perfil de teste (Thor, 28kg, 5 anos, Macho, foto placeholder) e confirmei nome/peso/idade/sexo/avatar renderizando corretamente. **Ficou como dado de teste na planilha real, a pedido do usuário** ("manter e eu ajusto depois") — editar com os dados reais do Thor quando quiser, direto pelo botão "Editar" do card de perfil.
+
+- **Rótulo "Dados de demonstração"** (PRD seção 33): nova coluna `Demonstração` (Sim/Não) na aba Medições, com migração defensiva no `getOrCreateSheet()` (mesmo mecanismo criado para a aba Perfil, agora compartilhado pelas duas). Badge "Demonstração" na tabela de histórico + aviso quando houver algum registro assim marcado. `addMeasurement()` grava `Não` por padrão em registros novos; os 3 originais do seed foram migrados para `Sim` (script pontual, já removido). Testado no navegador: badge aparece só nos 3 antigos, um registro novo criado na hora não ficou marcado.
+  - **Bug real encontrado e corrigido durante o teste**: o Google Sheets converte string puramente numérica ("001") para número (1), descartando o zero à esquerda — os IDs reais das medições sempre foram "1"/"2"/"3", nunca "001"/"002"/"003" como o código fingia gerar. Não quebrava nada (IDs continuam únicos e comparados como string em todo lugar), mas o `padStart(3, "0")` em `dataService.ts` e `scripts/seed.mjs` foi removido por ser enganoso/inútil.
+
+- **Exportação** (`ExportButton.tsx`, `src/utils/export.ts`, PRD seção 28): Excel (.xlsx via `xlsx`), CSV (nativo, sem lib) e PDF (via `jspdf` + `jspdf-autotable`) do conjunto já filtrado (`sorted`, respeita período/contexto ativos). CSV com BOM UTF-8 e separador `;` (padrão Excel PT-BR). Libs consultadas e aprovadas antes de instalar (regra 2); `xlsx` tem 2 CVEs sem correção no npm (Prototype Pollution/ReDoS, só exploráveis ao *parsear* arquivo malicioso — não é o nosso uso, que é só gerar arquivo a partir dos próprios dados), decisão consciente de seguir mesmo assim, registrada aqui. Testado no navegador: os 3 formatos baixaram de verdade, conferi o conteúdo de cada um (Excel e CSV lidos programaticamente, PDF aberto e visualmente correto com a paleta do design system).
+
+"Primeira tarefa" do CLAUDE.md seção 6: **concluída** (etapas 1 a 10).
+
+Todas as funcionalidades do PRD com critério de aceitação testável estão implementadas e validadas nesta rodada. Não há mais itens em "Funcionalidades do PRD ainda não iniciadas".
+
+## Investigar depois (não bloqueia nada)
+
+- [ ] Acesso ao dashboard pelo celular via `192.168.18.20:3000` (IP da rede local) não conectou. Suspeito é o Firewall do Windows bloqueando conexão de entrada na porta 3000 vinda de outro dispositivo (o teste feito nesta sessão via iframe não passa por essa barreira, então não descarta o problema). Se quiser acessar do celular de verdade no dia a dia, vale liberar a porta 3000 no firewall.
+
+## Infraestrutura / deploy
+
+- [ ] Inicializar repositório Git (`.gitignore` já está pronto e protege `.env*`).
+- [ ] Criar repositório no GitHub e dar push.
+- [ ] Criar projeto na Vercel, importar do GitHub.
+- [ ] Configurar `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY` e `GOOGLE_SHEET_ID` como variáveis de ambiente na Vercel (nunca commitar `.env.local`).
+- [ ] Depois do primeiro deploy, revisar se a chave da service account precisa ser rotacionada (boa prática após qualquer exposição, mesmo que controlada).
+
+## Débitos técnicos conhecidos
+
+- `getMeasurements()` busca todas as linhas da planilha a cada chamada, sem paginação nem cache. Aceitável para uso doméstico de baixo volume; reavaliar se o histórico crescer muito (centenas de registros).
+- IDs de medição são sequenciais (`String(count + 1).padStart(3, "0")`), calculados a partir da contagem de linhas no momento da escrita. Isso pode colidir se duas escritas acontecerem em paralelo (não é o caso hoje, uso é single-user, mas documentar a limitação).
+- Nenhum teste automatizado ainda.
+
+## Fora do MVP (roadmap, ver PRD seção 36) — não implementar sem pedido explícito
+
+- V2: múltiplos pets, peso, água, frequência urinária, apetite, atividade, cetonas, anexos, fotos.
+- V3: sensores de glicose, compartilhamento com veterinário, relatórios automáticos, PDF veterinário, autenticação, notificações.
+- V4: histórico de consultas, medicamentos, exames laboratoriais, múltiplos cuidadores, sincronização em nuvem.

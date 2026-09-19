@@ -23,7 +23,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#F8F7FC] text-[#252333]">{children}</body>
+      <body
+        className="min-h-full flex flex-col bg-[#F8F7FC] bg-repeat text-[#252333]"
+        style={{ backgroundImage: "url('/papel-de-parede.jpg')", backgroundSize: "340px auto" }}
+      >
+        {children}
+      </body>
     </html>
   );
 }

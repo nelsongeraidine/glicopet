@@ -1,7 +1,7 @@
 # PRD.md — GlicoPet
 # Product Requirements Document
-# Versão 3.1 — Especificação do produto (MVP)
-Data de Atualização: 19-09-2026_Versão 3.10
+# Versão 3.2 — Especificação do produto (MVP)
+Data de Atualização: 19-09-2026_Versão 3.20
 
 ## 0. Relação com o CLAUDE.md
 
@@ -38,7 +38,7 @@ O usuário registra:
 - contexto;
 - observações.
 
-O dashboard mostra a evolução dos dados através de cards, gráficos, timeline, histórico e filtros.
+O dashboard mostra a evolução dos dados através de cards, gráficos, histórico e filtros.
 
 O projeto deve ser simples e intuitivo.
 
@@ -143,7 +143,7 @@ Fundo verde pastel. Tela de estatísticas com:
 - timeline vertical com ícones por tipo de evento;
 - mascote gato.
 
-Referência para a timeline (seção 21) e para o resumo do período (seção 22).
+Referência para o resumo do período (seção 22). O elemento de timeline vertical desta imagem inspirou a seção 21 original, hoje removida do escopo (ver seção 21).
 
 ## `referencia_paleta_3.png`
 
@@ -385,20 +385,14 @@ Não classificar automaticamente a quantidade como adequada ou inadequada.
 
 ---
 
-# 21. Timeline
+# 21. Timeline (removida do escopo)
 
-Timeline vertical, combinando glicemia, insulina e alimentação, ordenada por data/hora:
+Implementada e depois removida em 19-09-2026, a pedido do usuário: com volume real de dados
+(passou de 3 para 18 registros nos testes), a lista vertical de eventos individuais cresce
+rápido e deixa de ser prática para análise visual — o Histórico de medições (seção 26, tabela)
+e o Gráfico de glicemia (seção 17) já cobrem a mesma necessidade de forma mais compacta.
 
-```text
-07:30
-🩸 135 mg/dL
-
-07:35
-💉 2 U
-
-07:40
-🍽️ 80 g
-```
+Não reimplementar sem pedido explícito.
 
 ---
 
@@ -475,7 +469,7 @@ Botão **Exportar dados**. Formatos: Excel, CSV, PDF. Exportar somente os dados 
 
 - **Desktop:** dashboard completo.
 - **Tablet:** reorganização de cards e gráficos.
-- **Mobile:** cards empilhados, gráfico com rolagem horizontal quando necessária, botão de nova medição acessível, timeline em largura total.
+- **Mobile:** cards empilhados, gráfico com rolagem horizontal quando necessária, botão de nova medição acessível, tabela de histórico com rolagem horizontal quando necessária.
 
 ---
 

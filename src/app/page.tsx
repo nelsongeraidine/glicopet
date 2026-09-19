@@ -12,7 +12,6 @@ import {
   glucoseTrend,
 } from "@/utils/calculations";
 import { GlucoseChart } from "@/components/GlucoseChart";
-import { Timeline } from "@/components/Timeline";
 import { MeasurementFormModal } from "@/components/MeasurementFormModal";
 import { DeleteMeasurementButton } from "@/components/DeleteMeasurementButton";
 import { DateFilter } from "@/components/DateFilter";
@@ -62,7 +61,7 @@ export default async function DashboardPage(props: PageProps<"/">) {
   }).length;
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+    <main className="mx-auto w-full max-w-7xl flex-1 bg-[#F8F7FC] px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">🐶 GlicoPet</h1>
@@ -142,11 +141,6 @@ export default async function DashboardPage(props: PageProps<"/">) {
               />
             </div>
             <p className="mt-4 text-sm text-[#6F6B78]">{trend}</p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="mb-4 text-lg font-semibold">Linha do tempo</h2>
-            <Timeline measurements={measurements} />
           </section>
 
           <section className="rounded-2xl bg-white p-4 shadow-sm">

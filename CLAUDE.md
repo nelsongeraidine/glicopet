@@ -1,5 +1,5 @@
 # CLAUDE.md — GlicoPet
-Data de Atualização: 19-09-2026_Versão 4.01
+Data de Atualização: 19-09-2026_Versão 4.02
 
 ## Visão geral
 
@@ -11,7 +11,7 @@ Regra de ouro antes de adicionar qualquer funcionalidade: "isso ajuda o tutor a 
 
 Next.js 16 (App Router) + TypeScript + Tailwind, deploy na Vercel.
 Fonte de dados: Google Sheets, acessado só pelo servidor via service account (`src/services/dataService.ts`); credenciais em `.env.local`, nunca no client nem commitadas.
-Contrato do `dataService`: `getMeasurements / addMeasurement / updateMeasurement / deleteMeasurement / getPetProfile`. A UI nunca fala diretamente com o Sheets, sempre passa por essas funções.
+Contrato do `dataService`: `getMeasurements / addMeasurement / updateMeasurement / deleteMeasurement / getPetProfile / updatePetProfile`. A UI nunca fala diretamente com o Sheets, sempre passa por essas funções.
 Estrutura: `/src/app` (rotas), `/src/services` (dataService), `/src/types`, `/src/utils`, `/scripts` (seed único, não roda em produção).
 
 ## Escopo do projeto

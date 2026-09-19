@@ -101,7 +101,10 @@ async function getProfileSheet(): Promise<GoogleSpreadsheetWorksheet> {
 
 function toNumberOrUndefined(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
-  const parsed = Number(value);
+  // A planilha usa localização pt-BR e formata decimais com vírgula (ex: "2,9");
+  // Number() só entende ponto, então normaliza antes de converter.
+  const normalized = typeof value === "string" ? value.replace(",", ".") : value;
+  const parsed = Number(normalized);
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
@@ -211,15 +214,21 @@ export async function updatePetProfile(data: Partial<Pet>): Promise<Pet> {
   const rows = await sheet.getRows();
   const current = rows[0]?.toObject() ?? {};
 
+  // Usa "!== undefined" (não "??"): campo ausente em `data` preserva o valor atual,
+  // mas string vazia explícita ("") é um pedido de limpar o campo e deve prevalecer.
+  function pick<T>(newVal: T | undefined, currentVal: unknown): T | string {
+    return newVal !== undefined ? newVal : ((currentVal as T) ?? "");
+  }
+
   const merged: Record<string, string | number> = {
-    Nome: data.name ?? (current["Nome"] as string) ?? "",
-    Foto: data.photoUrl ?? (current["Foto"] as string) ?? "",
-    "Peso (kg)": data.weightKg ?? (current["Peso (kg)"] as number) ?? "",
-    "Nascimento/Idade": data.birthDateOrAge ?? (current["Nascimento/Idade"] as string) ?? "",
-    Sexo: data.sex ?? (current["Sexo"] as string) ?? "",
-    Observações: data.notes ?? (current["Observações"] as string) ?? "",
-    "Faixa Mínima (mg/dL)": data.referenceRangeMin ?? (current["Faixa Mínima (mg/dL)"] as number) ?? "",
-    "Faixa Máxima (mg/dL)": data.referenceRangeMax ?? (current["Faixa Máxima (mg/dL)"] as number) ?? "",
+    Nome: pick(data.name, current["Nome"]),
+    Foto: pick(data.photoUrl, current["Foto"]),
+    "Peso (kg)": pick(data.weightKg, current["Peso (kg)"]),
+    "Nascimento/Idade": pick(data.birthDateOrAge, current["Nascimento/Idade"]),
+    Sexo: pick(data.sex, current["Sexo"]),
+    Observações: pick(data.notes, current["Observações"]),
+    "Faixa Mínima (mg/dL)": pick(data.referenceRangeMin, current["Faixa Mínima (mg/dL)"]),
+    "Faixa Máxima (mg/dL)": pick(data.referenceRangeMax, current["Faixa Máxima (mg/dL)"]),
   };
 
   if (rows[0]) {

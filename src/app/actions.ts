@@ -73,19 +73,16 @@ export async function updateReferenceRangeAction(formData: FormData): Promise<vo
 }
 
 export async function updatePetProfileAction(formData: FormData): Promise<void> {
-  const name = String(formData.get("name") ?? "").trim();
-  const photoUrl = String(formData.get("photoUrl") ?? "").trim();
-  const birthDateOrAge = String(formData.get("birthDateOrAge") ?? "").trim();
-  const sex = String(formData.get("sex") ?? "").trim();
-  const notes = String(formData.get("notes") ?? "").trim();
-
+  // Campos de texto usam string vazia como "limpar" de propósito: o formulário de perfil
+  // sempre envia todos os campos, então "" aqui significa que o usuário apagou o valor,
+  // não "não preencheu". Ver `pick()` em dataService.updatePetProfile.
   await updatePetProfile({
-    name: name || undefined,
-    photoUrl: photoUrl || undefined,
+    name: String(formData.get("name") ?? "").trim(),
+    photoUrl: String(formData.get("photoUrl") ?? "").trim(),
     weightKg: parseOptionalNumber(formData.get("weightKg")),
-    birthDateOrAge: birthDateOrAge || undefined,
-    sex: sex || undefined,
-    notes: notes || undefined,
+    birthDateOrAge: String(formData.get("birthDateOrAge") ?? "").trim(),
+    sex: String(formData.get("sex") ?? "").trim(),
+    notes: String(formData.get("notes") ?? "").trim(),
   });
   revalidatePath("/");
 }

@@ -36,7 +36,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# foto pessoal fora do controle de versão até decisão do usuário
+# cópia de referência redundante; a versão usada pelo app é public/chanel.jpg (versionada)
 assets/references/chanel.jpeg
 
 # typescript

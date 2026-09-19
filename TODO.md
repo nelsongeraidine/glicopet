@@ -2,7 +2,7 @@
 
 Backlog de pendências técnicas e melhorias futuras. Não é especificação de produto (isso é `PRD.md`) nem guia de processo (isso é `CLAUDE.md`); é só a lista viva do que falta.
 
-Última atualização: 19-09-2026 (17ª rodada).
+Última atualização: 19-09-2026 (18ª rodada).
 
 ---
 
@@ -54,6 +54,10 @@ Todas as funcionalidades do PRD com critério de aceitação testável estão im
   - **[P3] Emoji lido literalmente por leitor de tela, loading sem `aria-live`, `error.tsx` sem log**: `aria-hidden` no 🐶, `role="status"`/`aria-live="polite"` no loading, `console.error(error)` adicionado.
   - **Débito técnico endereçado à parte** (não veio do impeccable, pedido explícito depois): `updateMeasurement`/`deleteMeasurement` buscavam a planilha inteira (todas as colunas, todas as linhas) só para achar uma linha por ID. Agora localizam a linha lendo só a coluna A (`findRowOffsetById`, via `getCellsInRange`) e buscam a linha completa só depois, com `getRows({offset, limit: 1})`. Testado contra a planilha real: criar → editar → excluir um registro de teste, confirmando que só a linha certa foi afetada e o restante do histórico ficou intacto.
   - Tudo validado com `tsc --noEmit`, `eslint` e `next build` limpos a cada etapa, mais testes reais no navegador (desktop e iframe 390×844 simulando mobile) e teste ponta a ponta contra a planilha real do Google Sheets.
+
+- **Bug real encontrado e corrigido: gráfico de glicemia fora de ordem cronológica** (`GlucoseChart.tsx`, achado pelo usuário): a ordenação usava `dateTime.localeCompare(dateTime)`, comparando a data como texto "DD/MM/YYYY" — isso ordena errado sempre que o dia do mês seguinte é numericamente menor (ex: "16/08" > "03/09" em comparação de string, mesmo agosto vindo antes de setembro). Corrigido usando `parseDateTime()` (já usado no resto do projeto) para comparar por timestamp real. Testado no navegador com dados reais (julho/agosto/setembro misturados): eixo horizontal agora aparece em ordem cronológica correta.
+
+- **Links de redes sociais no rodapé** (`SocialLinks.tsx`, a pedido do usuário): ícones inline em SVG (sem nova dependência, regra 2 do `CLAUDE.md`) de LinkedIn e Instagram + `@nelsonggeraidine`, cada um linkando pro perfil correspondente (`target="_blank"`), discreto no rodapé abaixo do aviso de "não substitui o veterinário". Testado no navegador: ícones renderizam certo, link do LinkedIn confirmado com `aria-label` correto.
 
 ## Investigar depois (não bloqueia nada)
 

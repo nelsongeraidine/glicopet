@@ -3,6 +3,7 @@ import { MeasurementFormModal } from "@/components/MeasurementFormModal";
 import { ReferenceRangeSettings } from "@/components/ReferenceRangeSettings";
 import { PetProfileSettings } from "@/components/PetProfileSettings";
 import { Dashboard } from "@/components/Dashboard";
+import { SocialLinks } from "@/components/SocialLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
       <footer className="mt-8 text-center text-xs text-[#6F6B78]">
         Este aplicativo é uma ferramenta de acompanhamento e registro. Não substitui o
         acompanhamento do médico-veterinário.
+        <SocialLinks />
       </footer>
     </main>
   );

@@ -33,6 +33,22 @@ const PROFILE_HEADERS = [
 
 let cachedDoc: GoogleSpreadsheet | null = null;
 
+/**
+ * Painéis de variáveis de ambiente (Vercel etc.) costumam receber a chave colada com
+ * aspas extras ao redor ou já com quebras de linha reais em vez de "\n" literal — normaliza
+ * os dois casos pra evitar erro de PEM inválido (ERR_OSSL_UNSUPPORTED) na assinatura do JWT.
+ */
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+  return key.includes("\\n") ? key.replace(/\\n/g, "\n") : key;
+}
+
 function getAuth() {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const rawKey = process.env.GOOGLE_PRIVATE_KEY;
@@ -45,7 +61,7 @@ function getAuth() {
 
   return new JWT({
     email,
-    key: rawKey.replace(/\\n/g, "\n"),
+    key: normalizePrivateKey(rawKey),
     scopes: [
       "https://www.googleapis.com/auth/spreadsheets",
       "https://www.googleapis.com/auth/drive.file",

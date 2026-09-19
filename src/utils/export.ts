@@ -1,8 +1,5 @@
 "use client";
 
-import * as XLSX from "xlsx";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { Measurement } from "@/types/measurement";
 
 const COLUMNS = [
@@ -48,7 +45,10 @@ export function exportToCsv(measurements: Measurement[], filename = "glicopet-me
   triggerDownload(blob, filename);
 }
 
-export function exportToXlsx(measurements: Measurement[], filename = "glicopet-medicoes.xlsx") {
+export async function exportToXlsx(measurements: Measurement[], filename = "glicopet-medicoes.xlsx") {
+  // Import sob demanda: xlsx só é necessário quando o usuário realmente exporta,
+  // não deve pesar no bundle carregado por toda visita ao dashboard.
+  const XLSX = await import("xlsx");
   const rows = [COLUMNS, ...measurements.map(toRow)];
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
@@ -56,7 +56,11 @@ export function exportToXlsx(measurements: Measurement[], filename = "glicopet-m
   XLSX.writeFile(workbook, filename);
 }
 
-export function exportToPdf(measurements: Measurement[], filename = "glicopet-medicoes.pdf") {
+export async function exportToPdf(measurements: Measurement[], filename = "glicopet-medicoes.pdf") {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
   const doc = new jsPDF();
   doc.setFontSize(14);
   doc.text("GlicoPet — Histórico de medições", 14, 16);

@@ -1,36 +1,21 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { PERIOD_OPTIONS, CONTEXT_FILTER_OPTIONS, type PeriodFilter } from "@/utils/filters";
+import { PERIOD_OPTIONS, CONTEXT_FILTER_OPTIONS, type MeasurementFilters, type PeriodFilter } from "@/utils/filters";
 
-export function DateFilter() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const period = (searchParams.get("period") as PeriodFilter) || "all";
-  const from = searchParams.get("from") ?? "";
-  const to = searchParams.get("to") ?? "";
-  const context = searchParams.get("context") ?? "Todas";
-
-  function updateParams(updates: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(updates)) {
-      if (value === null || value === "") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    }
-    const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
-  }
+export function DateFilter({
+  filters,
+  onChange,
+}: {
+  filters: MeasurementFilters;
+  onChange: (filters: MeasurementFilters) => void;
+}) {
+  const { period, from = "", to = "", context = "Todas" } = filters;
 
   function handlePeriodClick(value: PeriodFilter) {
     if (value === "custom") {
-      updateParams({ period: "custom" });
+      onChange({ ...filters, period: "custom" });
     } else {
-      updateParams({ period: value, from: null, to: null });
+      onChange({ ...filters, period: value, from: undefined, to: undefined });
     }
   }
 
@@ -42,7 +27,7 @@ export function DateFilter() {
           type="button"
           onClick={() => handlePeriodClick(option.value)}
           className={`rounded-full px-3 py-1 text-sm ${
-            period === option.value ? "bg-[#B9A0E8] text-white" : "bg-[#F8F7FC] text-[#252333]"
+            period === option.value ? "bg-[#7C5FC4] text-white" : "bg-[#F8F7FC] text-[#252333]"
           }`}
         >
           {option.label}
@@ -53,23 +38,26 @@ export function DateFilter() {
         <>
           <input
             type="date"
+            aria-label="Data inicial"
             value={from}
-            onChange={(e) => updateParams({ from: e.target.value })}
+            onChange={(e) => onChange({ ...filters, from: e.target.value })}
             className="rounded-lg border border-[#DCEBFA] p-1 text-sm"
           />
           <span className="text-sm text-[#6F6B78]">até</span>
           <input
             type="date"
+            aria-label="Data final"
             value={to}
-            onChange={(e) => updateParams({ to: e.target.value })}
+            onChange={(e) => onChange({ ...filters, to: e.target.value })}
             className="rounded-lg border border-[#DCEBFA] p-1 text-sm"
           />
         </>
       )}
 
       <select
+        aria-label="Filtrar por contexto"
         value={context}
-        onChange={(e) => updateParams({ context: e.target.value === "Todas" ? null : e.target.value })}
+        onChange={(e) => onChange({ ...filters, context: e.target.value === "Todas" ? undefined : e.target.value })}
         className="rounded-lg border border-[#DCEBFA] p-1 text-sm"
       >
         {CONTEXT_FILTER_OPTIONS.map((option) => (
@@ -81,7 +69,7 @@ export function DateFilter() {
 
       <button
         type="button"
-        onClick={() => router.push(pathname)}
+        onClick={() => onChange({ period: "all" })}
         className="ml-auto text-sm text-[#6F6B78] underline decoration-dotted"
       >
         Limpar filtros

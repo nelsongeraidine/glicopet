@@ -79,20 +79,6 @@ export function filterMeasurements(
   return result;
 }
 
-export function parseFiltersFromSearchParams(
-  searchParams: Record<string, string | string[] | undefined>
-): MeasurementFilters {
-  const rawPeriod = typeof searchParams.period === "string" ? searchParams.period : "all";
-  const period = PERIOD_OPTIONS.some((o) => o.value === rawPeriod) ? (rawPeriod as PeriodFilter) : "all";
-
-  return {
-    period,
-    from: typeof searchParams.from === "string" ? searchParams.from : undefined,
-    to: typeof searchParams.to === "string" ? searchParams.to : undefined,
-    context: typeof searchParams.context === "string" ? searchParams.context : undefined,
-  };
-}
-
 export function hasActiveFilters(filters: MeasurementFilters): boolean {
   return filters.period !== "all" || Boolean(filters.context && filters.context !== "Todas");
 }

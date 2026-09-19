@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { deleteMeasurementAction } from "@/app/actions";
 
-export function DeleteMeasurementButton({ id }: { id: string }) {
+export function DeleteMeasurementButton({ id, fullWidth }: { id: string; fullWidth?: boolean }) {
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -16,7 +16,7 @@ export function DeleteMeasurementButton({ id }: { id: string }) {
 
   if (confirming) {
     return (
-      <span className="inline-flex items-center gap-2 text-sm">
+      <span className={fullWidth ? "flex w-full items-center justify-center gap-2 text-sm" : "inline-flex items-center gap-2 text-sm"}>
         <span className="text-[#6F6B78]">Tem certeza?</span>
         <button
           type="button"
@@ -37,7 +37,11 @@ export function DeleteMeasurementButton({ id }: { id: string }) {
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      className="text-sm text-[#6F6B78] underline decoration-dotted"
+      className={
+        fullWidth
+          ? "w-full rounded-lg border border-[#DCEBFA] py-2 text-center text-sm text-[#6F6B78]"
+          : "text-sm text-[#6F6B78] underline decoration-dotted"
+      }
     >
       Excluir
     </button>

@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# artefatos locais de sessão do Claude Code, não fazem parte do projeto
+.claude/
+
 # cópia de referência redundante; a versão usada pelo app é public/chanel.jpg (versionada)
 assets/references/chanel.jpeg
 

@@ -111,6 +111,19 @@ async function getMeasurementsSheet(): Promise<GoogleSpreadsheetWorksheet> {
   return getOrCreateSheet(SHEET_TITLE, HEADERS);
 }
 
+/**
+ * Localiza o offset (0-based, entre as linhas de dado) de uma medição pelo ID, lendo só a
+ * coluna A em vez da planilha inteira — evita puxar todas as colunas de todas as linhas
+ * (getRows() sem offset/limit) só para achar uma linha em update/delete.
+ */
+async function findRowOffsetById(sheet: GoogleSpreadsheetWorksheet, id: string): Promise<number | null> {
+  if (sheet.rowCount < 2) return null;
+  const idColumn: string[][] | undefined = await sheet.getCellsInRange(`A2:A${sheet.rowCount}`);
+  if (!idColumn) return null;
+  const offset = idColumn.findIndex((row) => row?.[0] !== undefined && String(row[0]) === id);
+  return offset === -1 ? null : offset;
+}
+
 async function getProfileSheet(): Promise<GoogleSpreadsheetWorksheet> {
   return getOrCreateSheet(PROFILE_SHEET_TITLE, PROFILE_HEADERS);
 }
@@ -164,11 +177,9 @@ export async function getMeasurements(): Promise<Measurement[]> {
 
 export async function addMeasurement(data: NewMeasurement): Promise<Measurement> {
   const sheet = await getMeasurementsSheet();
-  const existingRows = await sheet.getRows();
-  // Sheets converte strings puramente numéricas para número, descartando zero à esquerda;
-  // não adianta usar padStart aqui.
-  const nextId = String(existingRows.length + 1);
-  const measurement: Measurement = { id: nextId, ...data };
+  // ID por contagem de linhas colidia após excluir um registro do meio (nova linha reusava
+  // um ID já existente, fazendo edição/exclusão acertarem a medição errada); UUID elimina isso.
+  const measurement: Measurement = { id: crypto.randomUUID(), ...data };
   await sheet.addRow(measurementToRow(measurement));
   return measurement;
 }
@@ -178,12 +189,11 @@ export async function updateMeasurement(
   data: Partial<NewMeasurement>
 ): Promise<Measurement> {
   const sheet = await getMeasurementsSheet();
-  const rows = await sheet.getRows();
-  const row = rows.find((r) => String(r.get("ID")) === id);
-
-  if (!row) {
+  const offset = await findRowOffsetById(sheet, id);
+  if (offset === null) {
     throw new Error(`Medição com ID ${id} não encontrada.`);
   }
+  const [row] = await sheet.getRows({ offset, limit: 1 });
 
   const current = rowToMeasurement(row.toObject());
   const updated: Measurement = { ...current, ...data, id };
@@ -194,13 +204,11 @@ export async function updateMeasurement(
 
 export async function deleteMeasurement(id: string): Promise<void> {
   const sheet = await getMeasurementsSheet();
-  const rows = await sheet.getRows();
-  const row = rows.find((r) => String(r.get("ID")) === id);
-
-  if (!row) {
+  const offset = await findRowOffsetById(sheet, id);
+  if (offset === null) {
     throw new Error(`Medição com ID ${id} não encontrada.`);
   }
-
+  const [row] = await sheet.getRows({ offset, limit: 1 });
   await row.delete();
 }
 

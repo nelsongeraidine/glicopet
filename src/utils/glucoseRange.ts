@@ -18,7 +18,14 @@ export const RANGE_STATUS_LABEL: Record<GlucoseRangeStatus, string> = {
 };
 
 export const RANGE_STATUS_COLOR: Record<GlucoseRangeStatus, string> = {
-  abaixo: "#F2B8C6",
+  abaixo: "#DCEBFA",
   dentro: "#DDF1E7",
   acima: "#F2B8C6",
+};
+
+// Símbolo visível junto da cor: hipo/hiperglicemia não podem depender só de cor (WCAG 1.4.1).
+export const RANGE_STATUS_ICON: Record<GlucoseRangeStatus, string> = {
+  abaixo: "▼",
+  dentro: "",
+  acima: "▲",
 };

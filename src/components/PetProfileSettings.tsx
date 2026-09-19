@@ -68,33 +68,40 @@ export function PetProfileSettings({ pet }: { pet: Pet | null }) {
       <h2 className="mb-3 text-lg font-semibold">Perfil do pet</h2>
       <form action={handleSubmit} className="space-y-3">
         <div>
-          <label className={labelClass}>Nome</label>
-          <input name="name" defaultValue={pet?.name} className={fieldClass} />
+          <label htmlFor="pet-name" className={labelClass}>Nome</label>
+          <input id="pet-name" name="name" defaultValue={pet?.name} className={fieldClass} />
         </div>
 
         <div>
-          <label className={labelClass}>Foto (URL)</label>
-          <input name="photoUrl" defaultValue={pet?.photoUrl} className={fieldClass} />
+          <label htmlFor="pet-photo" className={labelClass}>Foto (URL)</label>
+          <input id="pet-photo" name="photoUrl" defaultValue={pet?.photoUrl} className={fieldClass} />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={labelClass}>Peso (kg)</label>
-            <input type="number" step="0.1" name="weightKg" defaultValue={pet?.weightKg} className={fieldClass} />
+            <label htmlFor="pet-weight" className={labelClass}>Peso (kg)</label>
+            <input
+              id="pet-weight"
+              type="number"
+              step="0.1"
+              name="weightKg"
+              defaultValue={pet?.weightKg}
+              className={fieldClass}
+            />
           </div>
           <div>
-            <label className={labelClass}>Nascimento/Idade</label>
-            <input name="birthDateOrAge" defaultValue={pet?.birthDateOrAge} className={fieldClass} />
+            <label htmlFor="pet-age" className={labelClass}>Nascimento/Idade</label>
+            <input id="pet-age" name="birthDateOrAge" defaultValue={pet?.birthDateOrAge} className={fieldClass} />
           </div>
           <div>
-            <label className={labelClass}>Sexo</label>
-            <input name="sex" defaultValue={pet?.sex} className={fieldClass} />
+            <label htmlFor="pet-sex" className={labelClass}>Sexo</label>
+            <input id="pet-sex" name="sex" defaultValue={pet?.sex} className={fieldClass} />
           </div>
         </div>
 
         <div>
-          <label className={labelClass}>Observações</label>
-          <textarea name="notes" rows={2} defaultValue={pet?.notes} className={fieldClass} />
+          <label htmlFor="pet-notes" className={labelClass}>Observações</label>
+          <textarea id="pet-notes" name="notes" rows={2} defaultValue={pet?.notes} className={fieldClass} />
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -103,7 +110,7 @@ export function PetProfileSettings({ pet }: { pet: Pet | null }) {
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-full bg-[#B9A0E8] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-full bg-[#7C5FC4] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isPending ? "Salvando..." : "Salvar"}
           </button>

@@ -64,10 +64,14 @@ export function ReferenceRangeSettings({
       <h2 className="mb-3 text-lg font-semibold">Faixa de referência</h2>
       <form action={handleSubmit} className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="mb-1 block text-sm text-[#6F6B78]">Limite inferior (mg/dL)</label>
+          <label htmlFor="range-min" className="mb-1 block text-sm text-[#6F6B78]">
+            Limite inferior (mg/dL)
+          </label>
           <input
+            id="range-min"
             type="number"
             step="1"
+            min="0"
             name="referenceRangeMin"
             defaultValue={min}
             required
@@ -75,10 +79,14 @@ export function ReferenceRangeSettings({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm text-[#6F6B78]">Limite superior (mg/dL)</label>
+          <label htmlFor="range-max" className="mb-1 block text-sm text-[#6F6B78]">
+            Limite superior (mg/dL)
+          </label>
           <input
+            id="range-max"
             type="number"
             step="1"
+            min="0"
             name="referenceRangeMax"
             defaultValue={max}
             required
@@ -88,7 +96,7 @@ export function ReferenceRangeSettings({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-full bg-[#B9A0E8] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="rounded-full bg-[#7C5FC4] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
           {isPending ? "Salvando..." : "Salvar"}
         </button>

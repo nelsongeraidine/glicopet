@@ -2,7 +2,7 @@
 
 Backlog de pendências técnicas e melhorias futuras. Não é especificação de produto (isso é `PRD.md`) nem guia de processo (isso é `CLAUDE.md`); é só a lista viva do que falta.
 
-Última atualização: 19-09-2026 (15ª rodada).
+Última atualização: 19-09-2026 (17ª rodada).
 
 ---
 
@@ -40,21 +40,35 @@ Backlog de pendências técnicas e melhorias futuras. Não é especificação de
 
 Todas as funcionalidades do PRD com critério de aceitação testável estão implementadas e validadas nesta rodada. Não há mais itens em "Funcionalidades do PRD ainda não iniciadas".
 
+- **Rodada de melhorias via `/impeccable`** (revisão de design + auditoria técnica, 19-09-2026): crítica dupla (heurísticas de Nielsen + auditoria de a11y/performance/theming/responsividade/integridade) rodou em dois assessments isolados, achou 9 problemas priorizados (1 P0, 4 P1, 3 P2, 1 P3) mais 1 achado do detector automático de slop. Todos corrigidos e testados no navegador nesta rodada:
+  - **[P0] Colisão de ID**: `addMeasurement()` gerava ID por contagem de linhas (`String(count+1)`); deletar um registro do meio e criar outro podia gerar ID duplicado, arriscando editar/excluir a medição errada. Trocado para `crypto.randomUUID()`.
+  - **[P1] Contraste do botão primário**: branco sobre `#B9A0E8` falhava WCAG AA (~2.27:1). Trocado para `#7C5FC4` (~5:1, passa AA) em todos os CTAs com texto branco.
+  - **[P1] Labels de formulário sem associação (`htmlFor`/`id`)**: adicionado nos 3 formulários (medição, perfil, faixa de referência); `aria-label` nos campos do `DateFilter` que não tinham `<label>`.
+  - **[P1] Modal sem semântica de diálogo**: `MeasurementFormModal` ganhou `role="dialog"` + `aria-modal` + `aria-labelledby`, foco move pro primeiro campo ao abrir, Tab preso dentro do modal, fecha com Esc e clique no backdrop.
+  - **[P1] Filtro recarregava a página inteira**: `DateFilter` usava `router.push`, forçando um round-trip ao servidor a cada clique. Refatorado: `page.tsx` virou server component fino, toda a lógica de filtro/estatísticas/tabela foi pro novo `src/components/Dashboard.tsx` (client component), que filtra localmente com `useMemo` — instantâneo, sem spinner de página inteira. `parseFiltersFromSearchParams` (morto) removido de `filters.ts`.
+  - **[P1] Tabela sem layout mobile**: abaixo de `sm`, vira lista de cards empilhados com Editar/Excluir de largura total (prop `fullWidth` nova em `MeasurementFormModal` e `DeleteMeasurementButton`, sem alterar a aparência no desktop).
+  - **[P2] Cor idêntica para "abaixo"/"acima" da faixa**: `glucoseRange.ts` usava `#F2B8C6` pros dois status (hipo/hiperglicemia indistinguíveis). Agora "abaixo" usa `#DCEBFA` (azul já existente na paleta) e "acima" mantém `#F2B8C6`, mais um ícone visível (▼/▲) ao lado do dot — não depende só de cor.
+  - **[P2] Libs de exportação carregadas de cara**: `xlsx`/`jspdf`/`jspdf-autotable` viraram `import()` dinâmico dentro de `exportToXlsx`/`exportToPdf`, só baixados quando o usuário exporta de fato.
+  - **[P2] Dropdown de exportação sem semântica**: `ExportButton` ganhou `aria-haspopup`/`aria-expanded`, `role="menu"`/`"menuitem"`, fecha com clique fora e Esc.
+  - **[P3] Fonte Arial sobrescrevendo o Geist**: `globals.css` tinha `font-family: Arial` residual do boilerplate do Next.js, silenciosamente sobrescrevendo o Geist carregado em `layout.tsx`; removido junto com o bloco morto de dark-mode (nada consumia `--background`/`--foreground`), `font-sans` aplicado no `body`. Confirmado: detector de slop, que apontava esse achado, zerou.
+  - **[P3] Emoji lido literalmente por leitor de tela, loading sem `aria-live`, `error.tsx` sem log**: `aria-hidden` no 🐶, `role="status"`/`aria-live="polite"` no loading, `console.error(error)` adicionado.
+  - **Débito técnico endereçado à parte** (não veio do impeccable, pedido explícito depois): `updateMeasurement`/`deleteMeasurement` buscavam a planilha inteira (todas as colunas, todas as linhas) só para achar uma linha por ID. Agora localizam a linha lendo só a coluna A (`findRowOffsetById`, via `getCellsInRange`) e buscam a linha completa só depois, com `getRows({offset, limit: 1})`. Testado contra a planilha real: criar → editar → excluir um registro de teste, confirmando que só a linha certa foi afetada e o restante do histórico ficou intacto.
+  - Tudo validado com `tsc --noEmit`, `eslint` e `next build` limpos a cada etapa, mais testes reais no navegador (desktop e iframe 390×844 simulando mobile) e teste ponta a ponta contra a planilha real do Google Sheets.
+
 ## Investigar depois (não bloqueia nada)
 
-- [ ] Acesso ao dashboard pelo celular via `192.168.18.20:3000` (IP da rede local) não conectou. Suspeito é o Firewall do Windows bloqueando conexão de entrada na porta 3000 vinda de outro dispositivo (o teste feito nesta sessão via iframe não passa por essa barreira, então não descarta o problema). Se quiser acessar do celular de verdade no dia a dia, vale liberar a porta 3000 no firewall.
+- ~~Acesso ao dashboard pelo celular via IP local~~ — descartado: usuário confirmou acesso funcionando pelo celular via `https://glicopet.vercel.app` (não precisa mais do IP da rede local).
 
 ## Infraestrutura / deploy
 
 - [x] Repositório Git iniciado e enviado para https://github.com/nelsongeraidine/glicopet (repositório **público**). Commit único conferido item a item antes do push (sem `.env.local`, sem `node_modules`/`.next`, varredura por chave privada/e-mail de service account nos arquivos versionados deu negativo). `assets/references/chanel.jpeg` (foto pessoal de um cachorro, não faz parte do projeto) ficou fora do commit e foi adicionado ao `.gitignore` a pedido do usuário, que vai decidir depois o que fazer com ela.
-- [ ] Criar projeto na Vercel, importar do GitHub.
-- [ ] Configurar `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY` e `GOOGLE_SHEET_ID` como variáveis de ambiente na Vercel (nunca commitar `.env.local`).
-- [ ] Depois do primeiro deploy, revisar se a chave da service account precisa ser rotacionada (boa prática após qualquer exposição, mesmo que controlada).
+- [x] Projeto criado na Vercel (`glicopet`, importado do GitHub) e no ar em https://glicopet.vercel.app, com as 3 variáveis de ambiente configuradas (Production + Preview).
+  - **Bug real encontrado e corrigido**: primeiro deploy quebrava com `ERR_OSSL_UNSUPPORTED` (`DECODER routines::unsupported`) ao assinar o JWT — a `GOOGLE_PRIVATE_KEY` colada na Vercel estava malformada (provavelmente aspas do `.env.local` coladas junto). Corrigido em duas frentes: (1) `normalizePrivateKey()` em `dataService.ts` agora remove aspas envolventes se vierem coladas, tornando o parse mais tolerante a esse erro comum de colagem; (2) a variável foi reescrita direto na Vercel via API (não copiar/colar manual), eliminando o risco de erro humano. Confirmado via `curl` no domínio de produção (`glicopet.vercel.app`, sem SSO) que os dados reais carregam, e log de runtime sem erros.
+- ~~Revisar se a chave da service account precisa ser rotacionada~~ — descartado (19-09-2026): a chave nunca saiu do `.env.local` (não versionado) e da variável de ambiente criptografada da Vercel; a correção foi feita via API com o valor já confiável, sem copiar/colar humano nem log exposto. Sem indício real de exposição, rotacionar seria trabalho manual no GCP sem reduzir risco nenhum. Reconsiderar só se a chave for exposta de verdade algum dia.
 
 ## Débitos técnicos conhecidos
 
-- `getMeasurements()` busca todas as linhas da planilha a cada chamada, sem paginação nem cache. Aceitável para uso doméstico de baixo volume; reavaliar se o histórico crescer muito (centenas de registros).
-- IDs de medição são sequenciais (`String(count + 1)`, calculados a partir da contagem de linhas no momento da escrita). Isso pode colidir se duas escritas acontecerem em paralelo (não é o caso hoje, uso é single-user, mas documentar a limitação).
+- `getMeasurements()` busca todas as linhas da planilha a cada chamada, sem paginação nem cache — mas é inerente ao propósito da função (mostrar o histórico completo no dashboard), não um desperdício a corrigir. Aceitável para uso doméstico de baixo volume; reavaliar se o histórico crescer muito (centenas de registros). (`updateMeasurement`/`deleteMeasurement` não sofrem mais disso, ver 17ª rodada acima.)
 - Nenhum teste automatizado ainda.
 
 ## Fora do MVP (roadmap, ver PRD seção 36) — não implementar sem pedido explícito
